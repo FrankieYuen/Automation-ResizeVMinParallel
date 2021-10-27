@@ -1,0 +1,50 @@
+#
+# Prerequisites: Configure the system-assigned managed identity for the Azure Automation account 
+#
+# Using a system-assigned managed identity for an Azure Automation account (preview)
+# https://docs.microsoft.com/en-us/azure/automation/enable-managed-identity-for-automation
+#
+
+workflow VM-Resie
+{
+    
+    # Ensures you do not inherit an AzContext in your runbook
+    Disable-AzContextAutosave -Scope Process
+
+    # Connect to Azure with system-assigned managed identity
+    $AzureContext = (Connect-AzAccount -Identity).context
+
+    # set and store context
+    $AzureContext = Set-AzContext -SubscriptionName $AzureContext.Subscription -DefaultProfile $AzureContext   
+  
+    # A list of VMs that want to be resized
+    $VMs = @'
+vmname,targetsize,resourceGroup
+vm01,Standard_B2s,rg_dev
+vm02,Standard_B2s,rg_test
+'@
+    $VMs_to_resize = $VMs | ConvertFrom-Csv
+
+    Write-Output "Job Start: $(Get-Date)"
+    Write-Output "................................."
+    Write-Output ""
+
+    ForEach -Parallel ($vmresize in $VMs_to_resize)
+    {
+        InlineScript
+        {
+            $resize = $Using:vmresize
+            $vm = Get-AzVM -ResourceGroupName $resize.resourceGroup -Name $resize.vmname
+            if ($vm.HardwareProfile.VmSize -ne $resize.targetsize)
+            {
+                $vm.HardwareProfile.VmSize = $resize.targetsize
+                Update-AzVM -VM $vm -ResourceGroupName $resize.resourceGroup
+            }
+        }
+    }
+
+    Write-Output ""
+    Write-Output "................................."
+    Write-Output "Job End: $(Get-Date)"
+
+}
