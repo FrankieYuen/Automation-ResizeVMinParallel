@@ -4,6 +4,9 @@
 # Using a system-assigned managed identity for an Azure Automation account (preview)
 # https://docs.microsoft.com/en-us/azure/automation/enable-managed-identity-for-automation
 #
+# Create a PowerShell Workflow runbook with the follow code
+#
+
 
 workflow VM-Resie
 {
@@ -17,7 +20,7 @@ workflow VM-Resie
     # set and store context
     $AzureContext = Set-AzContext -SubscriptionName $AzureContext.Subscription -DefaultProfile $AzureContext   
   
-    # A list of VMs that want to be resized
+    # A list of VMs that want to be resized, please modifed the list here
     $VMs = @'
 vmname,targetsize,resourceGroup
 vm01,Standard_B2s,rg_dev
